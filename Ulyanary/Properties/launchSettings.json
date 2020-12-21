@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Ulyanary": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
