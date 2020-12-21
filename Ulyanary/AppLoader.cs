@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using Ulyanary.Config;
+using Ulyanary.Helpers.Impl;
 
 namespace Ulyanary
 {
@@ -12,7 +14,6 @@ namespace Ulyanary
         private bool _stopping;
         private static ConfigLoader _configLoader;
         public static ConfigData LoadedConfig => _configLoader.LoadedConfig;
-        private static MqttSubscriper _mqttSubscriper;
 
         public static AppLoader Instance
         {
@@ -30,12 +31,7 @@ namespace Ulyanary
             _configLoader ??= new ConfigLoader();
             _configLoader.LoadConfig();
         }
-        public static void StartMqttSubscription()
-        {
-            _mqttSubscriper ??= new MqttSubscriper(LoadedConfig, new FalconConsumer(LoadedConfig));
-        }
-
-
+        
         private AppLoader()
         {
             new Thread(RunLoop).Start();

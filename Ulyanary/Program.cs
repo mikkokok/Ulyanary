@@ -6,7 +6,9 @@ namespace Ulyanary
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var apploader = AppLoader.Instance;
+            AppLoader.LoadConfig();
+            Console.WriteLine("Config loaded");
         }
     }
 }
