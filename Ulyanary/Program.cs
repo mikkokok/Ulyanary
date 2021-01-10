@@ -1,4 +1,5 @@
 ﻿using System;
+using Ulyanary.Helpers.Impl;
 
 namespace Ulyanary
 {
@@ -6,9 +7,11 @@ namespace Ulyanary
     {
         static void Main(string[] args)
         {
-            var apploader = AppLoader.Instance;
+            _ = AppLoader.Instance;
             AppLoader.LoadConfig();
             Console.WriteLine("Config loaded");
+            _ = new OumanCollector(AppLoader.LoadedConfig);
+            Console.WriteLine("Polling started");
         }
     }
 }

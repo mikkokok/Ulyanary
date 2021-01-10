@@ -9,6 +9,8 @@ namespace Ulyanary.Config
     {
         [XmlElement]
         public RestlessFalcon RestlessFalcon;
+        [XmlElement]
+        public Ouman Ouman;
    }
     [XmlRoot("ConfigData")]
     public class RestlessFalcon
@@ -19,5 +21,11 @@ namespace Ulyanary.Config
         public string key;
         [XmlElement]
         public string sslThumbprint;
+    }
+    [XmlRoot("ConfigData")]
+    public class Ouman
+    {
+        [XmlElement]
+        public string url;
     }
 }

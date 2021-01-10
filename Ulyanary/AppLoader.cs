@@ -43,10 +43,5 @@ namespace Ulyanary
                 Thread.Sleep(10000);
             }
         }
-
-        public void Stop()
-        {
-            _stopping = true;
-        }
     }
 }
