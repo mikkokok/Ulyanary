@@ -108,7 +108,7 @@ namespace Ulyanary.Helpers.Impl
                     await _falconConsumer.SendSensorData(new DTO.SensorData
                     {
                         SensorName = "OumanValve",
-                        Temperature = doubleValue
+                        ValvePosition = doubleValue
                     });
                 });
             }
