@@ -112,6 +112,20 @@ namespace Ulyanary.Helpers.Impl
                     });
                 });
             }
+            else if (code.Equals("S_259_85"))
+            {
+                translation = "Mitattu menoveden lämpötila";
+                double.TryParse(result, out var doubleValue);
+                _ = Task.Run(async () =>
+                {
+                    await _falconConsumer.SendSensorData(new DTO.SensorData
+                    {
+                        SensorName = "RadiatorNetworkIn",
+                        ValvePosition = doubleValue
+                    });
+                });
+
+            }
             else
             {
                 translation = code;

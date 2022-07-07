@@ -41,6 +41,8 @@ namespace Ulyanary.Helpers.Impl
         }
         public async Task SendSensorData(SensorData data)
         {
+            Console.WriteLine("Starting to send DTO");
+            Console.WriteLine(data);
             var uriBuilder = new UriBuilder(_falconUrl)
             {
                 Scheme = Uri.UriSchemeHttps,
