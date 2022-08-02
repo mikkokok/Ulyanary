@@ -62,7 +62,7 @@ namespace Ulyanary.Helpers.Impl
         }
         private async Task<string> DoRequestAsync(string url)
         {
-            var response = await _httpClient.GetAsync($"{url}request?S_261_85;S_272_85;S_227_85");
+            var response = await _httpClient.GetAsync($"{url}request?S_261_85;S_272_85;S_227_85;S_259_85");
             response.EnsureSuccessStatusCode();
 
             return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -121,7 +121,7 @@ namespace Ulyanary.Helpers.Impl
                     await _falconConsumer.SendSensorData(new DTO.SensorData
                     {
                         SensorName = "RadiatorNetworkIn",
-                        ValvePosition = doubleValue
+                        Temperature = doubleValue
                     });
                 });
 

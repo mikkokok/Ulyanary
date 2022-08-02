@@ -14,5 +14,6 @@ namespace Ulyanary.DTO
         public double Pressure { get; set; }
         public double ValvePosition { get; set; }
         public string Time { get; set; }
+        public double UsedPower { get; set; }
     }
 }

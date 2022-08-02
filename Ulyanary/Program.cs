@@ -11,7 +11,9 @@ namespace Ulyanary
             AppLoader.LoadConfig();
             Console.WriteLine("Config loaded");
             _ = new OumanCollector(AppLoader.LoadedConfig);
-            Console.WriteLine("Polling started");
+            Console.WriteLine("Ouman polling started");
+            _ = new ShellyCollector(AppLoader.LoadedConfig);
+            Console.WriteLine("Shelly polling started");
         }
     }
 }
