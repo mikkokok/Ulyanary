@@ -9,7 +9,7 @@ namespace Ulyanary
 {
     internal class AppLoader
     {
-        private static volatile object _locker = new object();
+        private static volatile object _locker = new();
         private static AppLoader _instance;
         private bool _stopping;
         private static ConfigLoader _configLoader;
