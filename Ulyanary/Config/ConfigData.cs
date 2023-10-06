@@ -13,7 +13,9 @@ namespace Ulyanary.Config
         public Ouman Ouman;
         [XmlArray("Shelly"), XmlArrayItem(typeof(Device))]
         public List<Device> ShellyDevices;
-   }
+        [XmlArray("Fronius"), XmlArrayItem(typeof(Device))]
+        public List<Device> FroniusDevices;
+    }
     [XmlRoot("ConfigData")]
     public class RestlessFalcon
     {

@@ -40,8 +40,10 @@ namespace Ulyanary.Helpers.Impl
             {
                 if (CalculateExactHour())
                 {
-                    await Shelly3EMCollector();
-                    await Shelly1PMCollector();
+                    _ = Shelly3EMCollector();
+                    _ = Shelly1PMCollector();
+                    _ = ShellyPro3EMCollector();
+                    _ = ShellyPlus1PMCollector();
                 }
                 Thread.Sleep(TimeSpan.FromSeconds(30));
             }
@@ -59,7 +61,7 @@ namespace Ulyanary.Helpers.Impl
 
         private async Task Shelly1PMCollector()
         {
-            foreach (Device device in _config.ShellyDevices.Where(m => m.Model.Contains("1PM")))
+            foreach (Device device in _config.ShellyDevices.Where(m => m.Model.Equals("Shelly1PM")))
             {
                 try
                 {
@@ -75,7 +77,7 @@ namespace Ulyanary.Helpers.Impl
                             continue;
                         }
 
-                        double consumed = ConvertWminTokWh(total, device.CounterValue);
+                        double consumed = CalcHelpers.ConvertWminTokWh(total, device.CounterValue);
                         if (!device.InitialPoll)
                         {
                             InvokeFalcon(new SensorData
@@ -98,11 +100,11 @@ namespace Ulyanary.Helpers.Impl
         }
         private async Task Shelly3EMCollector()
         {
-            foreach (Device device in _config.ShellyDevices.Where(m => m.Model.Contains("3EM")))
+            foreach (Device device in _config.FroniusDevices.Where(m => m.Model.Equals("FroniusSymo")))
             {
                 try
                 {
-                    var response = await QueryShellyDevice($"http://{device.IP}/status/");
+                    var response = await QueryShellyDevice($"http://{device.IP}/solar_api/v1/GetPowerFlowRealtimeData.fcgi");
                     double total = 0;
                     bool parseResult = false;
                     for (int i = 0; i <= 2; i++)
@@ -119,7 +121,7 @@ namespace Ulyanary.Helpers.Impl
                             device.InitialPoll = false;
                             continue;
                         }
-                        double consumed = CalculateWHTokWh(total, device.CounterValue);
+                        double consumed = CalcHelpers.CalculateWHTokWh(total, device.CounterValue);
                         if (!device.InitialPoll)
                         {
                             InvokeFalcon(new SensorData
@@ -137,6 +139,85 @@ namespace Ulyanary.Helpers.Impl
                     device.InitialPoll = true;
                     Console.WriteLine($"Shelly device {device.Name} failed, errormessage {ex.Message}, continuing");
                 }
+            }
+        }
+        private async Task ShellyPro3EMCollector()
+        {
+            foreach (Device device in _config.ShellyDevices.Where(m => m.Model.Equals("ShellyPro3EM")))
+            {
+                try
+                {
+                    var response = await QueryShellyDevice($"http://{device.IP}/rpc/EMdata.GetStatus?id=0");
+                    var parseResult = double.TryParse(response["total_act_ret"].ToString(), out double total);
+                    if (parseResult)
+                    {
+                        if (total == 0 || total < device.CounterValue || device.CounterValue == 0)
+                        {
+                            Console.WriteLine($"Something funky with {device.Name}");
+                            device.CounterValue = total;
+                            device.InitialPoll = false;
+                            continue;
+                        }
+
+                        double consumed = CalcHelpers.CalculateWHTokWh(total, device.CounterValue);
+                        if (!device.InitialPoll)
+                        {
+                            InvokeFalcon(new SensorData
+                            {
+                                SensorName = device.Name,
+                                UsedPower = consumed
+                            });
+                        }
+                        device.InitialPoll = false;
+                        device.CounterValue = total;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    device.InitialPoll = true;
+                    Console.WriteLine($"Shelly device {device.Name} failed, errormessage {ex.Message}, continuing");
+                }
+
+            }
+        }
+
+        private async Task ShellyPlus1PMCollector()
+        {
+            foreach (Device device in _config.ShellyDevices.Where(m => m.Model.Equals("ShellyPlus1PM")))
+            {
+                try
+                {
+                    var response = await QueryShellyDevice($"http://{device.IP}/rpc/Switch.GetStatus?id=0");
+                    var parseResult = double.TryParse(response["aenergy"]["total"].ToString(), out double total);
+                    if (parseResult)
+                    {
+                        if (total == 0 || total < device.CounterValue || device.CounterValue == 0)
+                        {
+                            Console.WriteLine($"Something funky with {device.Name}");
+                            device.CounterValue = total;
+                            device.InitialPoll = false;
+                            continue;
+                        }
+
+                        double consumed = CalcHelpers.ConvertWminTokWh(total, device.CounterValue);
+                        if (!device.InitialPoll)
+                        {
+                            InvokeFalcon(new SensorData
+                            {
+                                SensorName = device.Name,
+                                UsedPower = consumed
+                            });
+                        }
+                        device.InitialPoll = false;
+                        device.CounterValue = total;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    device.InitialPoll = true;
+                    Console.WriteLine($"Shelly device {device.Name} failed, errormessage {ex.Message}, continuing");
+                }
+
             }
         }
         private async Task<JsonObject> QueryShellyDevice(string url)
@@ -161,17 +242,6 @@ namespace Ulyanary.Helpers.Impl
         private void InvokeFalcon(SensorData sensorData)
         {
             _ = Task.Run(async () => await _falconConsumer.SendSensorData(sensorData));
-        }
-
-        private static double ConvertWminTokWh(double total, double previous)
-        {
-            var consumed = total - previous;
-            return consumed * 0.000016666;
-        }
-        private static double CalculateWHTokWh(double total, double previous)
-        {
-            var consumed = total - previous;
-            return consumed / 1000;
         }
     }
 }
