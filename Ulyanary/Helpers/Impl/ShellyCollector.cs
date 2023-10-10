@@ -30,24 +30,26 @@ namespace Ulyanary.Helpers.Impl
             {
                 Timeout = new TimeSpan(0, 0, 30)
             };
-            _ = StartCollectors();
         }
 
-        private async Task StartCollectors()
+        public async Task StartCollectors(CancellationToken token)
         {
-            _polling = true;
-            while (_polling)
+            await Task.Run(async () =>
             {
-                if (CalculateExactHour())
+                while (!token.IsCancellationRequested)
                 {
-                    _ = Shelly3EMCollector();
-                    _ = Shelly1PMCollector();
-                    _ = ShellyPro3EMCollector();
-                    _ = ShellyPlus1PMCollector();
+                    if (CalculateExactHour())
+                    {
+                        await Shelly3EMCollector();
+                        await Shelly1PMCollector();
+                        await ShellyPro3EMCollector();
+                        await ShellyPlus1PMCollector();
+                    }
+                    await Task.Delay(30 * 1000);
+
                 }
-                Thread.Sleep(TimeSpan.FromSeconds(30));
-            }
-            _polling = false;
+            });
+
         }
         private bool CalculateExactHour()
         {
@@ -100,11 +102,11 @@ namespace Ulyanary.Helpers.Impl
         }
         private async Task Shelly3EMCollector()
         {
-            foreach (Device device in _config.FroniusDevices.Where(m => m.Model.Equals("FroniusSymo")))
+            foreach (Device device in _config.ShellyDevices.Where(m => m.Model.Equals("Shelly3EM")))
             {
                 try
                 {
-                    var response = await QueryShellyDevice($"http://{device.IP}/solar_api/v1/GetPowerFlowRealtimeData.fcgi");
+                    var response = await QueryShellyDevice($"http://{device.IP}/status/");
                     double total = 0;
                     bool parseResult = false;
                     for (int i = 0; i <= 2; i++)

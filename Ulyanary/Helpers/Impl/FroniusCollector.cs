@@ -17,7 +17,6 @@ namespace Ulyanary.Helpers.Impl
         private readonly FalconConsumer _falconConsumer;
         private int _lastHour;
         private DateTime _todaysDate;
-        private bool _polling = false;
         private readonly HttpClient _httpClient;
         private bool retry = true;
 
@@ -31,21 +30,24 @@ namespace Ulyanary.Helpers.Impl
             {
                 Timeout = new TimeSpan(0, 0, 30)
             };
-            _ = StartCollectors();
         }
 
-        private async Task StartCollectors()
+        public async Task StartCollectors(CancellationToken token)
         {
-            _polling = true;
-            while (_polling)
+            await Task.Run(async () =>
             {
-                if (CalculateExactHour())
                 {
-                    await FroniusSymoCollector();
+                    while (!token.IsCancellationRequested)
+                    {
+                        if (CalculateExactHour())
+                        {
+                            await FroniusSymoCollector();
+                        }
+                        await Task.Delay(TimeSpan.FromSeconds(30));
+                    }
                 }
-                Thread.Sleep(TimeSpan.FromSeconds(30));
-            }
-            _polling = false;
+            }, token);
+
         }
         private bool CalculateExactHour()
         {
@@ -68,7 +70,7 @@ namespace Ulyanary.Helpers.Impl
                 try
                 {
                     var response = await QueryFroniusDevice($"http://{device.IP}/solar_api/v1/GetPowerFlowRealtimeData.fcgi");
-                    var parseResult = double.TryParse(response["Data"]["Site"]["E_Day"].ToString(), out double total);
+                    var parseResult = double.TryParse(response["Body"]["Data"]["Site"]["E_Day"].ToString(), out double total);
                     if (parseResult)
                     {
                         double yield = CalcHelpers.CalculateHourlyYield(total, device.CounterValue);
@@ -104,12 +106,17 @@ namespace Ulyanary.Helpers.Impl
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Polling Shelly device failed from url {url}, errormessage {ex.Message}, retrying");
-                if (retry)
+                Console.WriteLine($"Polling Fronius device failed from url {url}, errormessage {ex.Message}, retrying");
+                if (retry) {
+                    retry = false;
+                    await Task.Delay(TimeSpan.FromMinutes(5));
                     await QueryFroniusDevice(url);
-                Console.WriteLine($"Polling Shelly device failed from url {url}, errormessage {ex.Message}, failing");
+                    retry = true;
+                }
+
+                Console.WriteLine($"Polling Fronius device failed from url {url}, errormessage {ex.Message}, failing");
             }
-            throw new Exception($"Polling Shelly device failed from url {url}, failing");
+            throw new Exception($"Polling Fronius device failed from url {url}, failing");
 
         }
         private void InvokeFalcon(SensorData sensorData)

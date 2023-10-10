@@ -11,7 +11,6 @@ namespace Ulyanary.Helpers.Impl
     {
         private readonly string _polledUrl;
         private Timer _timer;
-        private bool _polling;
         private FalconConsumer _falconConsumer;
         private HttpClient _httpClient;
 
@@ -23,19 +22,16 @@ namespace Ulyanary.Helpers.Impl
             {
                 Timeout = new TimeSpan(0, 0, 30)
             };
-            StartPolling();
         }
 
         public void StartPolling()
         {
             Console.WriteLine("Resuming polling");
             _timer = new Timer(async _ => await GetAsync(_polledUrl), null, TimeSpan.Zero, TimeSpan.FromMinutes(15));
-            _polling = true;
         }
         public async Task StopPolling()
         {
             Console.WriteLine("Stopping polling");
-            _polling = false;
             _timer.Dispose();
             Console.WriteLine("Wait 15 minutes before resuming polling");
             await Task.Delay(900000);
@@ -48,10 +44,10 @@ namespace Ulyanary.Helpers.Impl
             {
                 var result = await DoRequestAsync(url);
                 Console.WriteLine($"Result from Ouman {result}");
-                var split = result.Split('?')[1].Split(';');
+                string[] split = result.Split('?')[1].Split(';');
                 foreach (var splitted in split)
                 {
-                    await InvokeFalcon(splitted);
+                    InvokeFalcon(splitted);
                 }
             }
             catch (Exception ex)
@@ -67,7 +63,7 @@ namespace Ulyanary.Helpers.Impl
 
             return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         }
-        private async Task InvokeFalcon(string setwithcode)
+        private void InvokeFalcon(string setwithcode)
         {
             if (string.IsNullOrEmpty(setwithcode) || !setwithcode.Contains("=")) return;
             var code = setwithcode.Split('=')[0];
@@ -89,7 +85,7 @@ namespace Ulyanary.Helpers.Impl
             else if (code.Equals("S_261_85"))
             {
                 translation = "Mitattu huonelämpötila";
-                double.TryParse(result, out var doubleValue);
+                _ = double.TryParse(result, out var doubleValue);
                 _ = Task.Run(async () =>
                 {
                     await _falconConsumer.SendSensorData(new DTO.SensorData
