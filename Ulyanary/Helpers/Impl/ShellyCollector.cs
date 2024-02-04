@@ -48,7 +48,7 @@ namespace Ulyanary.Helpers.Impl
                     await Task.Delay(30 * 1000);
 
                 }
-            });
+            }, token);
 
         }
         private bool CalculateExactHour()
@@ -118,7 +118,7 @@ namespace Ulyanary.Helpers.Impl
                     {
                         if (total == 0 || total < device.CounterValue || device.CounterValue == 0)
                         {
-                            Console.WriteLine($"Something funky with {device.Name}");
+                            Console.WriteLine($"Something funky with {device.Name}, {device.IP}, total: {total}, CounterValue {device.CounterValue} ");
                             device.CounterValue = total;
                             device.InitialPoll = false;
                             continue;
@@ -233,17 +233,13 @@ namespace Ulyanary.Helpers.Impl
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Polling Shelly device failed from url {url}, errormessage {ex.Message}, retrying");
-                if (retry)
-                    await QueryShellyDevice(url);
                 Console.WriteLine($"Polling Shelly device failed from url {url}, errormessage {ex.Message}, failing");
+                throw;
             }
-            throw new Exception($"Polling Shelly device failed from url {url}, failing");
-
         }
         private void InvokeFalcon(SensorData sensorData)
         {
-            _ = Task.Run(async () => await _falconConsumer.SendSensorData(sensorData));
+            Task.Run(async () => await _falconConsumer.SendSensorData(sensorData));
         }
     }
 }
